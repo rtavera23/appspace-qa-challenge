@@ -53,7 +53,7 @@ Manual & API testing for the Appspace challenge.
 
 - Test cases: [`docs/testcases.md`](docs/testcases.md)  
 - Bug list (Form): [`docs/bugs-found.md`](docs/bugs-found.md)  
-- API bug (404 contract): `docs/BUG-20251002-API-001.md` (if present)  
+- API bug (404 contract): [`postman/bugs-found.md`](postman/bugs-found.md)
 - Postman **environment**: [`postman/Appspace – QA.postman_environment.json`](postman/Appspace%20–%20QA.postman_environment.json)  
 - Postman **collection**: [`postman/Appspace – ToDo API.postman_collection.json`](postman/Appspace%20–%20ToDo%20API.postman_collection.json)
 
