@@ -1,0 +1,45 @@
+@baseUrl = https://candidate-challenges-e3hbd7ckh3hzbead.westeurope-01.azurewebsites.net
+@lastTaskId = 0
+
+### GET /tasks
+GET {{baseUrl}}/tasks
+Accept: application/json
+
+### POST /tasks (create)
+# @name createTask
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "task created from REST Client",
+  "completed": false
+}
+
+### Save lastTaskId (script)
+# Use the response from createTask to set lastTaskId for later requests
+@lastTaskId = {{createTask.response.body.$.id}}
+
+### GET /tasks/{id}
+GET {{baseUrl}}/tasks/{{lastTaskId}}
+Accept: application/json
+
+### DELETE /tasks/{id}
+DELETE {{baseUrl}}/tasks/{{lastTaskId}}
+
+### NEGATIVE — GET /tasks/{id} not found
+GET {{baseUrl}}/tasks/00000000-0000-0000-0000-000000000000
+Accept: application/json
+
+### NEGATIVE — POST invalid payload
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": 123,
+  "completed": "yes"
+}
+
+### NEGATIVE — DELETE not found
+DELETE {{baseUrl}}/tasks/00000000-0000-0000-0000-000000000000

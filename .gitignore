@@ -1,0 +1,9 @@
+# macOS & editor
+.DS_Store
+.vscode/
+
+# Node / newman
+node_modules/
+npm-debug.log*
+reports/*.html
+reports/*.htm

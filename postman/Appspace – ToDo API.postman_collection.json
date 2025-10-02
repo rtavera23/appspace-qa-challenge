@@ -1,0 +1,301 @@
+{
+	"info": {
+		"_postman_id": "203731cd-ae3d-4ca6-86cf-21d01b75b7dc",
+		"name": "Appspace – ToDo API",
+		"description": "Collection to test the To-Do API (Smoke + Negative) with contract checks.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7816586"
+	},
+	"item": [
+		{
+			"name": "Smoke",
+			"item": [
+				{
+					"name": "GET /tasks",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse once",
+									"var data = pm.response.json();",
+									"",
+									"// Status & basic shape",
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"pm.test('Body is array', () => Array.isArray(data));",
+									"pm.test('Each task has id/title/completed', () => {",
+									"  data.forEach(t => {",
+									"    pm.expect(t).to.have.property('id');",
+									"    pm.expect(t).to.have.property('title');",
+									"    pm.expect(t).to.have.property('completed');",
+									"  });",
+									"});",
+									"pm.test('Latency < 800 ms', () => pm.expect(pm.response.responseTime).below(800));",
+									"",
+									"// Contract guard: allow internalNotes; forbid unknown keys",
+									"pm.test('Each task has id/title/completed (and may include internalNotes)', () => {",
+									"  data.forEach(t => {",
+									"    pm.expect(t).to.have.property('id');",
+									"    pm.expect(t).to.have.property('title');",
+									"    pm.expect(t).to.have.property('completed');",
+									"  });",
+									"});",
+									"",
+									"pm.test('No unknown fields in tasks', () => {",
+									"  const ALLOWED = new Set(['id','title','completed','internalNotes']);",
+									"  const unknown = [];",
+									"  data.forEach(t => {",
+									"    Object.keys(t).forEach(k => { if (!ALLOWED.has(k)) unknown.push(k); });",
+									"  });",
+									"  pm.expect(unknown, 'Unknown fields: ' + unknown.join(', ')).to.have.length(0);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST /tasks (create)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201 (Created)', () => pm.response.to.have.status(201));",
+									"const res = pm.response.json();",
+									"pm.test('Created task has id/title/completed', () => {",
+									"  pm.expect(res).to.have.property('id');",
+									"  pm.expect(res).to.have.property('title');",
+									"  pm.expect(res).to.have.property('completed');",
+									"});",
+									"pm.environment.set('lastTaskId', String(res.id));",
+									"pm.test('Saved lastTaskId to env', () => pm.expect(pm.environment.get('lastTaskId')).to.be.a('string'));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"{{newTitle}}\",\n  \"completed\": {{newCompleted}}\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tasks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET /tasks/{id}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 200', () => pm.response.to.have.status(200));",
+									"const res = pm.response.json();",
+									"pm.test('Id matches lastTaskId', () => pm.expect(String(res.id)).to.eql(pm.environment.get('lastTaskId')));",
+									"pm.test('Has title/completed', () => {",
+									"  pm.expect(res).to.have.property('title');",
+									"  pm.expect(res).to.have.property('completed');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks/{{lastTaskId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								"{{lastTaskId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE /tasks/{id}",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 204 (No Content)', () => pm.response.to.have.status(204));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks/{{lastTaskId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								"{{lastTaskId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Negative",
+			"item": [
+				{
+					"name": "GET /tasks/{id} — not found",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Assert contract",
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+									"",
+									"// Capture actuals for the bug evidence if it fails",
+									"if (pm.response.code !== 404) {",
+									"  pm.environment.set('lastNotFoundStatus', String(pm.response.code));",
+									"  pm.environment.set('lastNotFoundBody', pm.response.text());",
+									"  console.log('[NOT-FOUND BUG] Status:', pm.response.code, 'Body:', pm.response.text());",
+									"  pm.test('Captured unexpected status/body', () => true);",
+									"}",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks/00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								"00000000-0000-0000-0000-000000000000"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST /tasks — invalid payload",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Rejects invalid payload with 4xx', () => {",
+									"  pm.expect([400, 422]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": 123,\n  \"completed\": \"yes\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/tasks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE /tasks/{id} — not found",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('404 Not Found', () => pm.response.to.have.status(404));"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/tasks/00000000-0000-0000-0000-000000000000",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"tasks",
+								"00000000-0000-0000-0000-000000000000"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
